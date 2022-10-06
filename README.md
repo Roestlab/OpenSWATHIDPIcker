@@ -29,6 +29,8 @@ context is either 'global' or 'run-specific'
 run_id is either the id of the run that user want to use,
 or if the context is global, it can be anything, it will not be used.
 
+We strongly advice to install PyProphet in a Python virtualenv.
+
 citations
 
 1. Zhang, B., Chambers, M. C., & Tabb, D. L. (2007). Proteomic parsimony through bipartite graph analysis improves accuracy and transparency. Journal of proteome research, 6(9), 3549–3557. https://doi.org/10.1021/pr070230d

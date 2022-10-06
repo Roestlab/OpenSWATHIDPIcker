@@ -3,19 +3,23 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "OpenSWATHIDPicker"
-version = "0.0.4"
+name = "openswathidpicker"
+version = "0.0.5"
 authors = [
   { name="Kai Ren Chen", email="kairen.chen@mail.utoronto.com" },
 ]
 description = "A protein inference package used for OpenSWATH data"
 readme = "README.md"
+#license = "BSD"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
 classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 
 [project.urls]
