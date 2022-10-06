@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "openswathidpicker"
-version = "0.0.1"
+name = "OpenSWATHIDPicker"
+version = "0.0.4"
 authors = [
   { name="Kai Ren Chen", email="kairen.chen@mail.utoronto.com" },
 ]
@@ -14,10 +14,10 @@ license = { file="LICENSE" }
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/kairenchen721/testopenswathidpicker"
-"Bug Tracker" = "https://github.com/kairenchen721/testopenswathidpicker/issues"
+"Homepage" = "https://github.com/Roestlab/OpenSWATHIDPIcker"
+"Bug Tracker" = "https://github.com/Roestlab/OpenSWATHIDPIcker/issues"
