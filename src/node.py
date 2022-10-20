@@ -71,7 +71,7 @@ class Protein(Node):
         return hash(self.get_first_id() + str(self._decoy))
 
     # bottleneck
-    def get_both_first_accession(self, other: Protein) -> Tuple[str, str]:
+    def get_both_first_accession_and_target_decoy(self, other: Protein) -> Tuple[str, str]:
         this_acc = self.get_first_id() + self.get_target_decoy()
 
         that_acc = other.get_first_id() + self.get_target_decoy()
@@ -80,27 +80,27 @@ class Protein(Node):
 
     # bottleneck
     def __eq__(self, other: Protein) -> bool:
-        this_acc, that_acc = self.get_both_first_accession(other)
+        this_acc, that_acc = self.get_both_first_accession_and_target_decoy(other)
         return this_acc == that_acc
 
     def __ne__(self, other: Protein) -> bool:
-        this_acc, that_acc = self.get_both_first_accession(other)
+        this_acc, that_acc = self.get_both_first_accession_and_target_decoy(other)
         return this_acc != that_acc
 
     def __lt__(self, other: Protein) -> bool:
-        this_acc, that_acc = self.get_both_first_accession(other)
+        this_acc, that_acc = self.get_both_first_accession_and_target_decoy(other)
         return this_acc < that_acc
 
     def __le__(self, other: Protein) -> bool:
-        this_acc, that_acc = self.get_both_first_accession(other)
+        this_acc, that_acc = self.get_both_first_accession_and_target_decoy(other)
         return this_acc <= that_acc
 
     def __gt__(self, other: Protein) -> bool:
-        this_acc, that_acc = self.get_both_first_accession(other)
+        this_acc, that_acc = self.get_both_first_accession_and_target_decoy(other)
         return this_acc > that_acc
 
     def __ge__(self, other: Protein) -> bool:
-        this_acc, that_acc = self.get_both_first_accession(other)
+        this_acc, that_acc = self.get_both_first_accession_and_target_decoy(other)
         return this_acc >= that_acc
 
     def is_selected(self) -> bool:
@@ -172,7 +172,7 @@ class Peptide(Node):
         return hash(self.get_first_id() + str(self._decoy))
 
     # bottleneck
-    def get_both_ids(self, other: Peptide) -> Tuple[str, str]:
+    def get_both_first_id_target_decoy(self, other: Peptide) -> Tuple[str, str]:
         this_id = self.get_first_id() + self.get_target_decoy()
 
         that_id = other.get_first_id() + self.get_target_decoy()
@@ -181,27 +181,27 @@ class Peptide(Node):
 
     # bottleneck
     def __eq__(self, other: Peptide) -> bool:
-        this_id, that_id = self.get_both_ids(other)
+        this_id, that_id = self.get_both_first_id_target_decoy(other)
         return this_id == that_id
 
     def __ne__(self, other: Peptide) -> bool:
-        this_id, that_id = self.get_both_ids(other)
+        this_id, that_id = self.get_both_first_id_target_decoy(other)
         return this_id != that_id
 
     def __lt__(self, other: Peptide) -> bool:
-        this_id, that_id = self.get_both_ids(other)
+        this_id, that_id = self.get_both_first_id_target_decoy(other)
         return this_id < that_id
 
     def __le__(self, other: Peptide) -> bool:
-        this_id, that_id = self.get_both_ids(other)
+        this_id, that_id = self.get_both_first_id_target_decoy(other)
         return this_id <= that_id
 
     def __gt__(self, other: Peptide) -> bool:
-        this_id, that_id = self.get_both_ids(other)
+        this_id, that_id = self.get_both_first_id_target_decoy(other)
         return this_id > that_id
 
     def __ge__(self, other: Peptide) -> bool:
-        this_id, that_id = self.get_both_ids(other)
+        this_id, that_id = self.get_both_first_id_target_decoy(other)
         return this_id >= that_id
 
     def is_covered(self) -> bool:

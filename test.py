@@ -1,6 +1,8 @@
 import unittest
 from src import node, graph
 
+
+# we can make a testing osw file, and then have function read it
 # class TestInitialization(unittest.TestCase):
 #     def test_(self):
 #
@@ -71,37 +73,97 @@ class TestCollapse(unittest.TestCase):
         self.graph_1.node_dict[self.pep9] = [self.pro1]
         self.graph_1.node_dict[self.pep10] = [self.pro4, self.pro9]
 
-        # neighbours of pep8
+        # neighbours of pep8 (all node with degree
         self.protein_list = [self.pro1, self.pro5, self.pro2, self.pro8]
         # neighbours of pro1
         self.peptide_list = [self.pep4, self.pep3, self.pep7, self.pep9,
                              self.pep8]
 
-    def test_reorder_neighbours_1(self):
+    def test_categorize_node_degree(self):
+        """
+        reorder neighbours take a list of peptide and proteins
+        and then
+        :return:
+        """
+        """testing categorize_node_degree and peptides
+        important thing to check about reorder node: that each node is in the 
+        right category"""
 
-        """testing reorganized_protein_neighbours and peptides
-        important thing to check about reorganize neighbours: that it does
-        reorganize by the number of neighbours of the neighbours"""
+        # run the function
+        categorized_nodes = self.graph_1.categorize_node_degree(
+            list(self.graph_1.node_dict))
 
-        reformatted_protein_neighbours = self.graph_1.reorder_neighbours(
-            self.protein_list)
-
-        for i in range(1, len(reformatted_protein_neighbours)):
-            protein_neighbour_list = reformatted_protein_neighbours[i]
-            for protein_neighbour in protein_neighbour_list:
-                num_neighbours = len(self.graph_1.node_dict[protein_neighbour])
+        # then test
+        # skip 0, since there are never nodes that have 0 degree (those were
+        # filtered out when graph was initialized)
+        for i in range(1, len(categorized_nodes)):
+            node_degree_i_list = categorized_nodes[i]
+            for a_node in node_degree_i_list:
+                # for every node, check that their degree is 'i'
+                num_neighbours = len(self.graph_1.node_dict[a_node])
                 self.assertEqual(num_neighbours, i)
 
-    def test_reorder_neighbours_2(self):
+    def test_grouping_recursion(self):
+        # run the previous function
 
-        reformatted_peptide_neighbours = self.graph_1.reorder_neighbours(
-            self.peptide_list)
+        # this part is idential to the actual code
+        categorized_nodes = self.graph_1.categorize_node_degree(
+            list(self.graph_1.node_dict))
 
-        for j in range(1, len(reformatted_peptide_neighbours)):
-            peptide_neighbour_list = reformatted_peptide_neighbours[j]
-            for peptide_neighbour in peptide_neighbour_list:
-                num_neighbours = len(self.graph_1.node_dict[peptide_neighbour])
-                self.assertEqual(num_neighbours, j)
+        max_degree = len(categorized_nodes)
+
+        for i in range(1, len(categorized_nodes)):
+            node_degree_i_list = categorized_nodes[i]
+
+            if len(node_degree_i_list) == 0:
+                print(i, max_degree, "no node")
+                continue
+
+            specific_dict = {}
+            self.graph_1.build_specific_node_dict(node_degree_i_list, specific_dict)
+
+            node_degree_i_list.sort()
+            self.graph_1.grouping_recursion(node_degree_i_list, specific_dict)
+        # identical part ends
+
+        # check that the correct nodes were grouped together
+
+        # TODO: i need to check this
+        # I think making change to protein object in the node dict
+        # also make change to the protein object
+        # because I fill the node dict with that object
+
+        # either protein 2 has id '2' and '8' or
+        # protein 8 has id '2' and '8'
+        # also I want to use XOR
+
+        # checking all multi ones group correctly
+        self.assertTrue(self.pro2.get_id().sort() == ['2', '8'] or
+                        self.pro8.get_id().sort() == ['2', '8'])
+
+        self.assertTrue(self.pro4.get_id().sort() == ['4', '9'] or
+                        self.pro9.get_id().sort() == ['4', '9'])
+
+        self.assertTrue(self.pep1.get_id().sort() == ['1', '5'] or
+                        self.pep5.get_id().sort() == ['1', '5'])
+
+        self.assertTrue(self.pep3.get_id().sort() == ['3', '7', '9'] or
+                        self.pep7.get_id().sort() == ['3', '7', '9'] or
+                        self.pep9.get_id().sort() == ['3', '7', '9'])
+
+        # checking all singles stayed single
+        self.assertEqual(self.pro1.get_id().sort(), ['1'])
+        self.assertEqual(self.pro3.get_id().sort(), ['3'])
+        self.assertEqual(self.pro5.get_id().sort(), ['5'])
+        self.assertEqual(self.pro6.get_id().sort(), ['7'])
+        self.assertEqual(self.pro7.get_id().sort(), ['7'])
+
+        self.assertEqual(self.pep2.get_id().sort(), ['2'])
+        self.assertEqual(self.pep4.get_id().sort(), ['4'])
+        self.assertEqual(self.pep6.get_id().sort(), ['6'])
+        self.assertEqual(self.pep8.get_id().sort(), ['8'])
+        self.assertEqual(self.pep10.get_id().sort(), ['10s'])
+
 
     def test_compare_neighbours_1(self):
         self.assertTrue(

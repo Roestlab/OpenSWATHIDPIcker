@@ -174,16 +174,16 @@ class Graph:
         key_list = list(self.node_dict)
 
         # then group them based on their degree as a list of lists
-        all_nodes_reorganized = self.reorder_neighbours(key_list)
+        all_nodes_categorized = self.categorize_node_degree(key_list)
 
         # TODO: Better name
-        max_degree = len(all_nodes_reorganized)
+        max_degree = len(all_nodes_categorized)
 
         # the value is n when the nodes from degree n to 1 are finished
         progress_count_in_degrees = 1
 
         # i.e. for every degree
-        for num_edges in range(len(all_nodes_reorganized)):
+        for num_edges in range(max_degree):
 
             # skip the group of protein that only map 0 proteins
             # i.e. skip the degree of zero
@@ -191,22 +191,23 @@ class Graph:
                 continue
 
             # these are all the nodes with the same degree
-            same_edges_node_list = all_nodes_reorganized[num_edges]
+            same_degree_node_list = all_nodes_categorized[num_edges]
 
             # if there are no node that have exactly num_edges degree
-            if len(same_edges_node_list) == 0:
+            if len(same_degree_node_list) == 0:
                 print(progress_count_in_degrees, max_degree, "no node")
                 progress_count_in_degrees += 1
                 continue
 
-            # start this by first subset (and clone) the node dict
+            # start this by first subsetting the node dict (as a clone)
             specific_dict = {}
-            self.build_specific_node_dict(same_edges_node_list, specific_dict)
-            # then pass the neighbour list and the dict into recursion
+            self.build_specific_node_dict(same_degree_node_list, specific_dict)
+
+            # then pass the node list and the dict into recursion
             # first protein to remove is key, since all neighbours in
             # neighbour_list share this
-            same_edges_node_list.sort()
-            self.grouping_recursion(same_edges_node_list, specific_dict)
+            same_degree_node_list.sort()
+            self.grouping_recursion(same_degree_node_list, specific_dict)
 
             print(progress_count_in_degrees, max_degree)
             progress_count_in_degrees += 1
@@ -233,7 +234,7 @@ class Graph:
             if len(current_neighbours) >= 2:
 
                 # actually reorganize the neighbours
-                neighbours_reorganized = self.reorder_neighbours(
+                neighbours_reorganized = self.categorize_node_degree(
                     current_neighbours)
 
                 # print(list(map(len, neighbours_reorganized)))
@@ -288,19 +289,19 @@ class Graph:
     def num_neighbour(self, node: Node) -> int:
         return len(self.node_dict.get(node))
 
-    def reorder_neighbours(self, current_neighbours: List[Node]) \
+    def categorize_node_degree(self, current_neighbours: List[Node]) \
             -> List[List[Node]]:
         """
         take the list of protein, current_neighbours and reformat it into a
         list of list of protein where every protein in each sublist has the same
         number of neighbours, which is returned
         :param current_neighbours:
-        :return: neighbours_reorganized [0, 0, 28] means of the current
+        :return: node_categorized [0, 0, 28] means of the current
         neighbours of this protein (which are peptide). 0 map to exactly 0
         protein, 0 map to exactly 1 protein, 28 map to exactly 2 proteins
         """
 
-        neighbours_reorganized = []
+        node_categorized = []
 
         num_most_edges = self.find_node_most_edges(current_neighbours)
 
@@ -308,17 +309,17 @@ class Graph:
         # where num_most_edges is the greatest number of
         # neighbours a protein has
         for i in range(0, num_most_edges + 1):
-            neighbours_reorganized.append([])
+            node_categorized.append([])
 
         # for all neighbour
         for current_protein in current_neighbours:
             # find num of neighbours for current node
             num_peptide_neighbours = self.num_neighbour(current_protein)
             # append them to the list of list appropriately
-            neighbours_reorganized[
+            node_categorized[
                 num_peptide_neighbours].append(current_protein)
 
-        return neighbours_reorganized
+        return node_categorized
 
     def build_specific_node_dict(self,
                                  same_degree_protein: List[Node],
@@ -376,18 +377,6 @@ class Graph:
         # it is initially the degree
         num_protein_all = list(set(num_peptide))[0]
 
-
-        # TODO: test
-        all_id = []
-        for protein in same_degree_protein:
-            accession = protein.get_first_id()
-            if not 'DECOY' in accession and not accession.isnumeric():
-                all_id.append(protein.get_first_id())
-
-        if 'sp|Q9UI08-5|EVL_HUMAN' in all_id:
-            print('before merging', print(num_protein_all))
-            print('all id', all_id)
-
         # the protein in same_degree_protein all were part of a list that
         # all map to the same set of peptide
 
@@ -400,20 +389,15 @@ class Graph:
         # protein that share all its peptide
         if num_protein_all == 0:
 
-            # TODO when it was sort() there was nothing wrong (problem)
+            # TODO when it was sort() it does not give a warning
+            # the warning it does not recognize same_degree_protein as iterable
+            # but it is, for the purpose of iterating through it, since
+            # it is a list with a custom object that have the 6 comparison method
             sorted_same_degree_protein = sorted(same_degree_protein)
             # merge the protein that share the same set of peptides
             # TODO: refactor and extract this as a method
             # choose the first object in the list as the one to merge to
             final_protein_group = sorted_same_degree_protein[0]
-
-            # TODO: remove test
-            if 'sp|Q9UI08-2|EVL_HUMAN' in final_protein_group.get_id():
-                print('protein of interest', final_protein_group.get_id())
-                print('interest first id', final_protein_group.get_first_id())
-                for protein in sorted_same_degree_protein:
-                    print('other protein', protein.get_id())
-                    print('other protein first id', protein.get_first_id())
 
             # for all the protein in this set, skipping first one
             for index in range(1, len(sorted_same_degree_protein)):
@@ -426,9 +410,6 @@ class Graph:
                 final_protein_group.add_id(id_list)
                 # this only keeps the max score of them two
                 final_protein_group.add_score(score)
-
-            if 'sp|Q9UI08-2|EVL_HUMAN' in final_protein_group.get_id():
-                print('final protein group of interest', final_protein_group.get_id())
 
             # TODO supposed bottleneck
             # final_id_list = final_protein_group.get_id()
