@@ -1,5 +1,5 @@
 import unittest
-from src import node, graph
+from src import node, graph, components
 
 
 # we can make a testing osw file, and then have function read it
@@ -16,7 +16,7 @@ from src import node, graph
 #
 
 
-# noinspection PyArgumentList
+
 class TestCollapse(unittest.TestCase):
     """this class contains test for method used in collapse
     """
@@ -25,28 +25,29 @@ class TestCollapse(unittest.TestCase):
         # make graph
         self.graph_1 = graph.Graph()
 
+
         # make proteins objects
-        self.pro1 = node.Protein(['1'], 1)
-        self.pro2 = node.Protein(['2'], 1)
-        self.pro3 = node.Protein(['3'], 1)
-        self.pro4 = node.Protein(['4'], 1)
-        self.pro5 = node.Protein(['5'], 1)
-        self.pro6 = node.Protein(['6'], 1)
-        self.pro7 = node.Protein(['7'], 1)
-        self.pro8 = node.Protein(['8'], 1)
-        self.pro9 = node.Protein(['9'], 1)
+        self.pro1 = node.Protein(['1'], '1', 0)
+        self.pro2 = node.Protein(['2'], '2', 0)
+        self.pro3 = node.Protein(['3'], '3', 0)
+        self.pro4 = node.Protein(['4'], '4', 0)
+        self.pro5 = node.Protein(['5'], '5', 0)
+        self.pro6 = node.Protein(['6'], '6', 0)
+        self.pro7 = node.Protein(['7'], '7', 0)
+        self.pro8 = node.Protein(['8'], '8', 0)
+        self.pro9 = node.Protein(['9'], '9', 0)
 
         # make peptide objects
-        self.pep1 = node.Peptide([1])
-        self.pep2 = node.Peptide([2])
-        self.pep3 = node.Peptide([3])
-        self.pep4 = node.Peptide([4])
-        self.pep5 = node.Peptide([5])
-        self.pep6 = node.Peptide([6])
-        self.pep7 = node.Peptide([7])
-        self.pep8 = node.Peptide([8])
-        self.pep9 = node.Peptide([9])
-        self.pep10 = node.Peptide([10])
+        self.pep1 = node.Peptide(['1'], 0.1, 0)
+        self.pep2 = node.Peptide(['2'], 0.2, 0)
+        self.pep3 = node.Peptide(['3'], 0.3, 0)
+        self.pep4 = node.Peptide(['4'], 0.4, 0)
+        self.pep5 = node.Peptide(['5'], 0.5, 0)
+        self.pep6 = node.Peptide(['6'], 0.6, 0)
+        self.pep7 = node.Peptide(['7'], 0.7, 0)
+        self.pep8 = node.Peptide(['8'], 0.8, 0)
+        self.pep9 = node.Peptide(['9'], 0.9, 0)
+        self.pep10 = node.Peptide(['10'], 1.0, 0)
 
         # fill graph with proteins and their possible constituent peptides
         self.graph_1.node_dict[self.pro1] = [self.pep4, self.pep3, self.pep7,
@@ -106,7 +107,7 @@ class TestCollapse(unittest.TestCase):
     def test_grouping_recursion(self):
         # run the previous function
 
-        # this part is idential to the actual code
+        # this part is identical to the actual code
         categorized_nodes = self.graph_1.categorize_node_degree(
             list(self.graph_1.node_dict))
 
@@ -137,19 +138,43 @@ class TestCollapse(unittest.TestCase):
         # protein 8 has id '2' and '8'
         # also I want to use XOR
 
-        # checking all multi ones group correctly
+        # checking all multi ones merged correctly,
+        # thought this only check one of them is deleted, test should be rewritten so that
+        # it test one of them is merged, and all other ones are deleted
         self.assertTrue(self.pro2.get_id().sort() == ['2', '8'] or
                         self.pro8.get_id().sort() == ['2', '8'])
+
+        # and that the other one is deleted
+        self.assertTrue(
+            (self.pro2.get_first_id() + self.pro2.get_target_decoy()) in self.graph_1.node_to_delete or
+            (self.pro8.get_first_id() + self.pro8.get_target_decoy()) in self.graph_1.node_to_delete
+        )
 
         self.assertTrue(self.pro4.get_id().sort() == ['4', '9'] or
                         self.pro9.get_id().sort() == ['4', '9'])
 
+        self.assertTrue(
+            (self.pro4.get_first_id() + self.pro4.get_target_decoy()) in self.graph_1.node_to_delete or
+            (self.pro9.get_first_id() + self.pro9.get_target_decoy()) in self.graph_1.node_to_delete
+        )
+
         self.assertTrue(self.pep1.get_id().sort() == ['1', '5'] or
                         self.pep5.get_id().sort() == ['1', '5'])
+
+        self.assertTrue(
+            (self.pro1.get_first_id() + self.pro1.get_target_decoy()) in self.graph_1.node_to_delete or
+            (self.pro5.get_first_id() + self.pro5.get_target_decoy()) in self.graph_1.node_to_delete
+        )
 
         self.assertTrue(self.pep3.get_id().sort() == ['3', '7', '9'] or
                         self.pep7.get_id().sort() == ['3', '7', '9'] or
                         self.pep9.get_id().sort() == ['3', '7', '9'])
+
+        self.assertTrue(
+            (self.pro3.get_first_id() + self.pro3.get_target_decoy()) in self.graph_1.node_to_delete or
+            (self.pro7.get_first_id() + self.pro7.get_target_decoy()) in self.graph_1.node_to_delete or
+            (self.pro9.get_first_id() + self.pro9.get_target_decoy()) in self.graph_1.node_to_delete
+        )
 
         # checking all singles stayed single
         self.assertEqual(self.pro1.get_id().sort(), ['1'])
@@ -165,101 +190,31 @@ class TestCollapse(unittest.TestCase):
         self.assertEqual(self.pep10.get_id().sort(), ['10s'])
 
 
-    def test_compare_neighbours_1(self):
-        self.assertTrue(
-            self.graph_1.compare_neighbours_old((self.pep1, self.pep5))
-        )
-
-    def test_compare_neighbours_2(self):
-        self.assertTrue(
-            self.graph_1.compare_neighbours_old((self.pep3, self.pep9))
-        )
-
-    def test_compare_neighbours_3(self):
-        self.assertFalse(
-            self.graph_1.compare_neighbours_old((self.pep2, self.pep4))
-        )
-
-    def test_compare_neighbours_4(self):
-        self.assertFalse(
-            # two neighbours that is the same, one extra for 8
-            self.graph_1.compare_neighbours_old((self.pep8, self.pep4))
-        )
-
-    def test_compare_neighbours_5(self):
-        self.assertTrue(
-            self.graph_1.compare_neighbours_old((self.pro2, self.pro8))
-        )
-
-    def test_compare_neighbours_6(self):
-        self.assertTrue(
-            self.graph_1.compare_neighbours_old((self.pro4, self.pro9))
-        )
-
-    def test_compare_neighbours_7(self):
-        self.assertFalse(
-            self.graph_1.compare_neighbours_old((self.pro3, self.pro6))
-        )
-
-    def test_compare_neighbours_8(self):
-        self.assertTrue(
-            self.graph_1.compare_neighbours_old((self.pep1, self.pep5))
-        )
-
-    def test_delete_node_1(self):
-
-        self.graph_1.delete_node(self.pro8)
-        self.assertTrue(
-            self.pro8.get_first_id() in self.graph_1.node_to_delete
-        )
-
-    def test_delete_node_2(self):
-
-        self.graph_1.delete_node(self.pro9)
-        self.assertTrue(
-            self.pro9.get_first_id() in self.graph_1.node_to_delete
-        )
-
-    def test_delete_node_3(self):
-
-        self.graph_1.delete_node(self.pep7)
-        self.assertTrue(
-            self.pep7.get_first_id() in self.graph_1.node_to_delete
-        )
-
-    def test_delete_node_4(self):
-
-        self.graph_1.delete_node(self.pep9)
-        self.assertTrue(
-            self.pep9.get_first_id() in self.graph_1.node_to_delete
-        )
-
         # TODO: I need to write a test so that whenever any method go uses
         #  the delete node, it does not work
 
 
-# noinspection PyArgumentList,PyUnresolvedReferences
 class TestSeparate(unittest.TestCase):
     """this class contains test for method used in Separate
     """
 
     def setUp(self) -> None:
-        self.graph_1 = ppi.Graph()
-        self.pro_1 = ppi.Protein(['1'], 1)
-        self.pro_28 = ppi.Protein(['2', '8'], 1)
-        self.pro_3 = ppi.Protein(['3'], 1)
-        self.pro_49 = ppi.Protein(['4', '9'], 1)
-        self.pro_5 = ppi.Protein(['5'], 1)
-        self.pro_6 = ppi.Protein(['6'], 1)
-        self.pro_7 = ppi.Protein(['7'], 1)
+        self.graph_1 = graph.Graph()
+        self.pro_1 = graph.Protein(['1'], '1', 0)
+        self.pro_28 = graph.Protein(['2', '8'], '28', 0)
+        self.pro_3 = graph.Protein(['3'], '3', 0)
+        self.pro_49 = graph.Protein(['4', '9'], '49', 0)
+        self.pro_5 = graph.Protein(['5'], '5', 0)
+        self.pro_6 = graph.Protein(['6'], '6', 0)
+        self.pro_7 = graph.Protein(['7'], '7', 0)
 
-        self.pep_3_7_9 = ppi.Peptide([3, 7, 9])
-        self.pep_4 = ppi.Peptide([4])
-        self.pep_8 = ppi.Peptide([8])
-        self.pep_2 = ppi.Peptide([2])
-        self.pep_6 = ppi.Peptide([6])
-        self.pep_10 = ppi.Peptide([10])
-        self.pep_1_5 = ppi.Peptide([1, 5])
+        self.pep_3_7_9 = graph.Peptide(['3', '7', '9'], 0.1, 0)
+        self.pep_4 = graph.Peptide(['4'], 0.2, 0)
+        self.pep_8 = graph.Peptide(['8'], 0.3, 0)
+        self.pep_2 = graph.Peptide(['2'], 0.4, 0)
+        self.pep_6 = graph.Peptide(['6'], 0.5, 0)
+        self.pep_10 = graph.Peptide(['10'], 0.6, 0)
+        self.pep_1_5 = graph.Peptide(['1', '5'], 0.7, 0)
 
         self.graph_1.node_dict[self.pro_1] = [self.pep_3_7_9, self.pep_4,
                                               self.pep_8]
@@ -279,27 +234,29 @@ class TestSeparate(unittest.TestCase):
         self.graph_1.node_dict[self.pep_10] = [self.pro_49]
         self.graph_1.node_dict[self.pep_1_5] = [self.pro_7]
 
-        self.com_1 = ppi.Component()
-        self.com_2 = ppi.Component()
-        self.com_3 = ppi.Component()
+        self.com_1 = graph.Component()
+        self.com_2 = graph.Component()
+        self.com_3 = graph.Component()
 
+
+
+    def test_DFS(self):
+        """test whether dfs put the correct protein and peptide into the
+        correct connected components
+        """
+        # run dfs
         self.graph_1.dfs(self.pro_1, self.com_1)
         self.graph_1.dfs(self.pep_2, self.com_2)
         self.graph_1.dfs(self.pro_7, self.com_3)
 
-        """then just check if the correct proteins and peptide are in the 
-        respective a_component"""
-        self.com_1_pro = self.com_1.protein_dict.keys()
-        self.com_1_pep = self.com_1.peptide_dict.keys()
-        self.com_2_pro = self.com_2.protein_dict.keys()
-        self.com_2_pep = self.com_2.peptide_dict.keys()
-        self.com_3_pro = self.com_3.protein_dict.keys()
-        self.com_3_pep = self.com_3.peptide_dict.keys()
+        # rename for ease of calling
+        self.com_1_pro = self.com_1._protein_dict.keys()
+        self.com_1_pep = self.com_1._peptide_dict.keys()
+        self.com_2_pro = self.com_2._protein_dict.keys()
+        self.com_2_pep = self.com_2._peptide_dict.keys()
+        self.com_3_pro = self.com_3._protein_dict.keys()
+        self.com_3_pep = self.com_3._peptide_dict.keys()
 
-    def test_DFS(self):
-        """test whether or not dfs put the correct protein and peptide into the
-        correct connected components
-        """
         self.assertEqual(len(self.com_1_pro), 3)
         self.assertIn(self.pro_1, self.com_1_pro)
         self.assertIn(self.pro_28, self.com_1_pro)  # failed
@@ -328,58 +285,51 @@ class TestSeparate(unittest.TestCase):
         self.assertEqual(len(self.com_3_pep), 1)
         self.assertIn(self.pep_1_5, self.com_3_pep)
 
-        # component_list = []
-        #
-        # ppi.separate(graph_1, component_list)
-        #
-        # self.assertIn(component_1 in compo)
 
-
-# noinspection PyArgumentList,PyUnresolvedReferences
-class TestPPI(unittest.TestCase):
+class TestReduce(unittest.TestCase):
 
     def test_reduce(self):
-        component_1 = ppi.Component()
-        component_2 = ppi.Component()
-        component_3 = ppi.Component()
+        component_1 = components.Component()
+        component_2 = components.Component()
+        component_3 = components.Component()
 
-        pro_1 = ppi.Protein(['1'], 1)
-        pro_2_8 = ppi.Protein(['2', '8'], 1)
-        pro_5 = ppi.Protein(['5'], 1)
-        pro_3 = ppi.Protein(['3'], 1)
-        pro_4_9 = ppi.Protein(['4', '9'], 1)
-        pro_6 = ppi.Protein(['6'], 1)
-        pro_7 = ppi.Protein(['7'], 1)
+        pro_1 = graph.Protein(['1'], '1', 0)
+        pro_28 = graph.Protein(['2', '8'], '28', 0)
+        pro_3 = graph.Protein(['3'], '3', 0)
+        pro_49 = graph.Protein(['4', '9'], '49', 0)
+        pro_5 = graph.Protein(['5'], '5', 0)
+        pro_6 = graph.Protein(['6'], '6', 0)
+        pro_7 = graph.Protein(['7'], '7', 0)
 
-        pep_3_7_9 = ppi.Peptide([3, 7, 9])
-        pep_4 = ppi.Peptide([4])
-        pep_8 = ppi.Peptide([8])
-        pep_2 = ppi.Peptide([2])
-        pep_6 = ppi.Peptide([6])
-        pep_10 = ppi.Peptide([10])
-        pep_1_5 = ppi.Peptide([15])
+        pep_3_7_9 = graph.Peptide(['3', '7', '9'], 0.1, 0)
+        pep_4 = graph.Peptide(['4'], 0.2, 0)
+        pep_8 = graph.Peptide(['8'], 0.3, 0)
+        pep_2 = graph.Peptide(['2'], 0.4, 0)
+        pep_6 = graph.Peptide(['6'], 0.5, 0)
+        pep_10 = graph.Peptide(['10'], 0.6, 0)
+        pep_1_5 = graph.Peptide(['1', '5'], 0.7, 0)
 
+        # not done through dfs, since I want to only test reduce
         component_1.add_protein(pro_1, [pep_3_7_9, pep_4, pep_8])
-        component_1.add_protein(pro_2_8, [pep_8])
+        component_1.add_protein(pro_28, [pep_8])
         component_1.add_protein(pro_5, [pep_8, pep_4])
         component_1.add_peptide(pep_3_7_9, [pro_1])
         component_1.add_peptide(pep_4, [pro_1, pro_5])
-        component_1.add_peptide(pep_8, [pro_1, pro_5, pro_2_8])
+        component_1.add_peptide(pep_8, [pro_1, pro_5, pro_28])
 
         component_2.add_protein(pro_3, [pep_6])
-        component_2.add_protein(pro_4_9, [pep_2, pep_10])
+        component_2.add_protein(pro_49, [pep_2, pep_10])
         component_2.add_protein(pro_6, [pep_2, pep_6])
-        component_2.add_peptide(pep_2, [pro_4_9, pro_6])
+        component_2.add_peptide(pep_2, [pro_49, pro_6])
         component_2.add_peptide(pep_6, [pro_3, pro_6])
-        component_2.add_peptide(pep_10, [pro_4_9])
+        component_2.add_peptide(pep_10, [pro_49])
 
         component_3.add_protein(pro_7, [pep_1_5])
         component_3.add_peptide(pep_1_5, [pro_7])
 
         """a_component 1"""
         self.assertEqual(component_1.find_num_uncovered_peptides(pro_1), 3)
-        self.assertEqual(component_1._find_most_uncovered_protein(), pro_1)
-
+        self.assertEqual(component_1.find_most_uncovered_protein(), pro_1)
         self.assertEqual(component_1.make_protein_list(),
                          [pro_1.get_sqlite_id()])
 
@@ -389,13 +339,13 @@ class TestPPI(unittest.TestCase):
         self.assertTrue(pep_8.is_covered())
 
         """a_component 2"""
-        self.assertEqual(component_2.find_num_uncovered_peptides(pro_4_9), 2)
+        self.assertEqual(component_2.find_num_uncovered_peptides(pro_49), 2)
 
         self.assertEqual(component_2.find_num_uncovered_peptides(pro_6), 2)
 
         self.assertTrue(
-            component_2._find_most_uncovered_protein() == pro_4_9 or
-            component_2._find_most_uncovered_protein() == pro_6
+            component_2.find_most_uncovered_protein() == pro_49 or
+            component_2.find_most_uncovered_protein() == pro_6
         )
         # TODO protein 6 returns
 
@@ -405,7 +355,7 @@ class TestPPI(unittest.TestCase):
 
         self.assertEqual(
             component_2.make_protein_list().sort(),
-            [pro_4_9.get_sqlite_id(), pro_6.get_sqlite_id()].sort()
+            [pro_49.get_sqlite_id(), pro_6.get_sqlite_id()].sort()
         )
 
         self.assertTrue(pep_2.is_covered())
@@ -414,7 +364,7 @@ class TestPPI(unittest.TestCase):
 
         """a_component 3"""
         self.assertEqual(component_3.find_num_uncovered_peptides(pro_7), 1)
-        self.assertEqual(component_3._find_most_uncovered_protein(), pro_7)
+        self.assertEqual(component_3.find_most_uncovered_protein(), pro_7)
 
         self.assertEqual(component_3.make_protein_list(),
                          [pro_7.get_sqlite_id()])
